@@ -59,6 +59,118 @@ const TABLE_ICONS = {
   sale_items: Activity
 }
 
+// Function to generate human-readable action descriptions
+const generateActionDescription = (log: AuditLog): string => {
+  const tableName = TABLE_DISPLAY_NAMES[log.table_name as keyof typeof TABLE_DISPLAY_NAMES] || log.table_name
+  
+  switch (log.action) {
+    case 'INSERT':
+      switch (log.table_name) {
+        case 'products':
+          return `Added new product: ${log.new_values?.name || 'Unknown Product'}`
+        case 'profiles':
+          return `Created new user account: ${log.new_values?.full_name || 'Unknown User'}`
+        case 'customers':
+          return `Added new customer: ${log.new_values?.name || 'Unknown Customer'}`
+        case 'sales':
+          return `Created new sale: ${log.new_values?.sale_number || 'Unknown Sale'}`
+        case 'expenses':
+          return `Recorded new expense: ${log.new_values?.description || 'Unknown Expense'}`
+        case 'categories':
+          return `Added new category: ${log.new_values?.name || 'Unknown Category'}`
+        case 'brands':
+          return `Added new brand: ${log.new_values?.name || 'Unknown Brand'}`
+        default:
+          return `Created new ${tableName.toLowerCase()} record`
+      }
+    
+    case 'UPDATE':
+      switch (log.table_name) {
+        case 'products':
+          return `Updated product: ${log.new_values?.name || log.old_values?.name || 'Unknown Product'}`
+        case 'profiles':
+          return `Updated user profile: ${log.new_values?.full_name || log.old_values?.full_name || 'Unknown User'}`
+        case 'customers':
+          return `Updated customer: ${log.new_values?.name || log.old_values?.name || 'Unknown Customer'}`
+        case 'sales':
+          return `Updated sale: ${log.new_values?.sale_number || log.old_values?.sale_number || 'Unknown Sale'}`
+        case 'expenses':
+          return `Updated expense: ${log.new_values?.description || log.old_values?.description || 'Unknown Expense'}`
+        case 'categories':
+          return `Updated category: ${log.new_values?.name || log.old_values?.name || 'Unknown Category'}`
+        case 'brands':
+          return `Updated brand: ${log.new_values?.name || log.old_values?.name || 'Unknown Brand'}`
+        default:
+          return `Updated ${tableName.toLowerCase()} record`
+      }
+    
+    case 'DELETE':
+      switch (log.table_name) {
+        case 'products':
+          return `Deleted product: ${log.old_values?.name || 'Unknown Product'}`
+        case 'profiles':
+          return `Deleted user account: ${log.old_values?.full_name || 'Unknown User'}`
+        case 'customers':
+          return `Deleted customer: ${log.old_values?.name || 'Unknown Customer'}`
+        case 'sales':
+          return `Deleted sale: ${log.old_values?.sale_number || 'Unknown Sale'}`
+        case 'expenses':
+          return `Deleted expense: ${log.old_values?.description || 'Unknown Expense'}`
+        case 'categories':
+          return `Deleted category: ${log.old_values?.name || 'Unknown Category'}`
+        case 'brands':
+          return `Deleted brand: ${log.old_values?.name || 'Unknown Brand'}`
+        default:
+          return `Deleted ${tableName.toLowerCase()} record`
+      }
+    
+    default:
+      return `${log.action} operation on ${tableName.toLowerCase()}`
+  }
+}
+
+// Function to get key changes for UPDATE operations
+const getKeyChanges = (log: AuditLog): string[] => {
+  if (log.action !== 'UPDATE' || !log.old_values || !log.new_values) {
+    return []
+  }
+
+  const changes: string[] = []
+  const oldValues = log.old_values
+  const newValues = log.new_values
+
+  // Check for specific field changes
+  if (oldValues.name !== newValues.name) {
+    changes.push(`Name: "${oldValues.name}" → "${newValues.name}"`)
+  }
+  if (oldValues.email !== newValues.email) {
+    changes.push(`Email: "${oldValues.email}" → "${newValues.email}"`)
+  }
+  if (oldValues.full_name !== newValues.full_name) {
+    changes.push(`Full Name: "${oldValues.full_name}" → "${newValues.full_name}"`)
+  }
+  if (oldValues.selling_price !== newValues.selling_price) {
+    changes.push(`Price: $${oldValues.selling_price} → $${newValues.selling_price}`)
+  }
+  if (oldValues.stock_quantity !== newValues.stock_quantity) {
+    changes.push(`Stock: ${oldValues.stock_quantity} → ${newValues.stock_quantity}`)
+  }
+  if (oldValues.amount !== newValues.amount) {
+    changes.push(`Amount: $${oldValues.amount} → $${newValues.amount}`)
+  }
+  if (oldValues.description !== newValues.description) {
+    changes.push(`Description: "${oldValues.description}" → "${newValues.description}"`)
+  }
+  if (oldValues.role !== newValues.role) {
+    changes.push(`Role: ${oldValues.role} → ${newValues.role}`)
+  }
+  if (oldValues.is_active !== newValues.is_active) {
+    changes.push(`Status: ${oldValues.is_active ? 'Active' : 'Inactive'} → ${newValues.is_active ? 'Active' : 'Inactive'}`)
+  }
+
+  return changes
+}
+
 export function AuditLogs() {
   const { profile } = useAuth()
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([])
@@ -279,7 +391,7 @@ export function AuditLogs() {
                   Action
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Table
+                  Description
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Changes
@@ -327,13 +439,24 @@ export function AuditLogs() {
                         {log.action}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <TableIcon className="h-4 w-4 text-gray-400 mr-2" />
-                        <span className="text-sm text-gray-900">
-                          {TABLE_DISPLAY_NAMES[log.table_name as keyof typeof TABLE_DISPLAY_NAMES] || log.table_name}
-                        </span>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">
+                        {generateActionDescription(log)}
                       </div>
+                      {log.action === 'UPDATE' && getKeyChanges(log).length > 0 && (
+                        <div className="mt-1">
+                          {getKeyChanges(log).slice(0, 2).map((change, index) => (
+                            <div key={index} className="text-xs text-gray-500">
+                              {change}
+                            </div>
+                          ))}
+                          {getKeyChanges(log).length > 2 && (
+                            <div className="text-xs text-gray-400">
+                              +{getKeyChanges(log).length - 2} more changes
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-900 max-w-xs truncate">
@@ -403,6 +526,12 @@ export function AuditLogs() {
                   </span>
                 </div>
                 <div>
+                  <label className="block text-sm font-medium text-gray-700">Description</label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {generateActionDescription(viewingLog)}
+                  </p>
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-gray-700">Table</label>
                   <p className="mt-1 text-sm text-gray-900">
                     {TABLE_DISPLAY_NAMES[viewingLog.table_name as keyof typeof TABLE_DISPLAY_NAMES] || viewingLog.table_name}
@@ -418,6 +547,18 @@ export function AuditLogs() {
 
               {/* Data Changes */}
               <div className="space-y-4">
+                {viewingLog.action === 'UPDATE' && getKeyChanges(viewingLog).length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Key Changes</label>
+                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                      {getKeyChanges(viewingLog).map((change, index) => (
+                        <div key={index} className="text-sm text-gray-900 mb-1">
+                          • {change}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {viewingLog.old_values && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Old Values</label>
