@@ -62,24 +62,26 @@ const TABLE_ICONS = {
 // Function to generate human-readable action descriptions
 const generateActionDescription = (log: AuditLog): string => {
   const tableName = TABLE_DISPLAY_NAMES[log.table_name as keyof typeof TABLE_DISPLAY_NAMES] || log.table_name
+  const newValues = log.new_values || {}
+  const oldValues = log.old_values || {}
   
   switch (log.action) {
     case 'INSERT':
       switch (log.table_name) {
         case 'products':
-          return `Added new product: ${log.new_values?.name || 'Unknown Product'}`
+          return `Added new product: ${newValues.name || 'Unknown Product'}`
         case 'profiles':
-          return `Created new user account: ${log.new_values?.full_name || 'Unknown User'}`
+          return `Created new user account: ${newValues.full_name || 'Unknown User'}`
         case 'customers':
-          return `Added new customer: ${log.new_values?.name || 'Unknown Customer'}`
+          return `Added new customer: ${newValues.name || 'Unknown Customer'}`
         case 'sales':
-          return `Created new sale: ${log.new_values?.sale_number || 'Unknown Sale'}`
+          return `Created new sale: ${newValues.sale_number || 'Unknown Sale'}`
         case 'expenses':
-          return `Recorded new expense: ${log.new_values?.description || 'Unknown Expense'}`
+          return `Recorded new expense: ${newValues.description || 'Unknown Expense'}`
         case 'categories':
-          return `Added new category: ${log.new_values?.name || 'Unknown Category'}`
+          return `Added new category: ${newValues.name || 'Unknown Category'}`
         case 'brands':
-          return `Added new brand: ${log.new_values?.name || 'Unknown Brand'}`
+          return `Added new brand: ${newValues.name || 'Unknown Brand'}`
         default:
           return `Created new ${tableName.toLowerCase()} record`
       }
@@ -87,19 +89,19 @@ const generateActionDescription = (log: AuditLog): string => {
     case 'UPDATE':
       switch (log.table_name) {
         case 'products':
-          return `Updated product: ${log.new_values?.name || log.old_values?.name || 'Unknown Product'}`
+          return `Updated product: ${newValues.name || oldValues.name || 'Unknown Product'}`
         case 'profiles':
-          return `Updated user profile: ${log.new_values?.full_name || log.old_values?.full_name || 'Unknown User'}`
+          return `Updated user profile: ${newValues.full_name || oldValues.full_name || 'Unknown User'}`
         case 'customers':
-          return `Updated customer: ${log.new_values?.name || log.old_values?.name || 'Unknown Customer'}`
+          return `Updated customer: ${newValues.name || oldValues.name || 'Unknown Customer'}`
         case 'sales':
-          return `Updated sale: ${log.new_values?.sale_number || log.old_values?.sale_number || 'Unknown Sale'}`
+          return `Updated sale: ${newValues.sale_number || oldValues.sale_number || 'Unknown Sale'}`
         case 'expenses':
-          return `Updated expense: ${log.new_values?.description || log.old_values?.description || 'Unknown Expense'}`
+          return `Updated expense: ${newValues.description || oldValues.description || 'Unknown Expense'}`
         case 'categories':
-          return `Updated category: ${log.new_values?.name || log.old_values?.name || 'Unknown Category'}`
+          return `Updated category: ${newValues.name || oldValues.name || 'Unknown Category'}`
         case 'brands':
-          return `Updated brand: ${log.new_values?.name || log.old_values?.name || 'Unknown Brand'}`
+          return `Updated brand: ${newValues.name || oldValues.name || 'Unknown Brand'}`
         default:
           return `Updated ${tableName.toLowerCase()} record`
       }
@@ -107,19 +109,19 @@ const generateActionDescription = (log: AuditLog): string => {
     case 'DELETE':
       switch (log.table_name) {
         case 'products':
-          return `Deleted product: ${log.old_values?.name || 'Unknown Product'}`
+          return `Deleted product: ${oldValues.name || 'Unknown Product'}`
         case 'profiles':
-          return `Deleted user account: ${log.old_values?.full_name || 'Unknown User'}`
+          return `Deleted user account: ${oldValues.full_name || 'Unknown User'}`
         case 'customers':
-          return `Deleted customer: ${log.old_values?.name || 'Unknown Customer'}`
+          return `Deleted customer: ${oldValues.name || 'Unknown Customer'}`
         case 'sales':
-          return `Deleted sale: ${log.old_values?.sale_number || 'Unknown Sale'}`
+          return `Deleted sale: ${oldValues.sale_number || 'Unknown Sale'}`
         case 'expenses':
-          return `Deleted expense: ${log.old_values?.description || 'Unknown Expense'}`
+          return `Deleted expense: ${oldValues.description || 'Unknown Expense'}`
         case 'categories':
-          return `Deleted category: ${log.old_values?.name || 'Unknown Category'}`
+          return `Deleted category: ${oldValues.name || 'Unknown Category'}`
         case 'brands':
-          return `Deleted brand: ${log.old_values?.name || 'Unknown Brand'}`
+          return `Deleted brand: ${oldValues.name || 'Unknown Brand'}`
         default:
           return `Deleted ${tableName.toLowerCase()} record`
       }
@@ -136,33 +138,33 @@ const getKeyChanges = (log: AuditLog): string[] => {
   }
 
   const changes: string[] = []
-  const oldValues = log.old_values
-  const newValues = log.new_values
+  const oldValues = log.old_values || {}
+  const newValues = log.new_values || {}
 
   // Check for specific field changes
   if (oldValues.name !== newValues.name) {
-    changes.push(`Name: "${oldValues.name}" → "${newValues.name}"`)
+    changes.push(`Name: "${oldValues.name || ''}" → "${newValues.name || ''}"`)
   }
   if (oldValues.email !== newValues.email) {
-    changes.push(`Email: "${oldValues.email}" → "${newValues.email}"`)
+    changes.push(`Email: "${oldValues.email || ''}" → "${newValues.email || ''}"`)
   }
   if (oldValues.full_name !== newValues.full_name) {
-    changes.push(`Full Name: "${oldValues.full_name}" → "${newValues.full_name}"`)
+    changes.push(`Full Name: "${oldValues.full_name || ''}" → "${newValues.full_name || ''}"`)
   }
   if (oldValues.selling_price !== newValues.selling_price) {
-    changes.push(`Price: $${oldValues.selling_price} → $${newValues.selling_price}`)
+    changes.push(`Price: $${oldValues.selling_price || 0} → $${newValues.selling_price || 0}`)
   }
   if (oldValues.stock_quantity !== newValues.stock_quantity) {
-    changes.push(`Stock: ${oldValues.stock_quantity} → ${newValues.stock_quantity}`)
+    changes.push(`Stock: ${oldValues.stock_quantity || 0} → ${newValues.stock_quantity || 0}`)
   }
   if (oldValues.amount !== newValues.amount) {
-    changes.push(`Amount: $${oldValues.amount} → $${newValues.amount}`)
+    changes.push(`Amount: $${oldValues.amount || 0} → $${newValues.amount || 0}`)
   }
   if (oldValues.description !== newValues.description) {
-    changes.push(`Description: "${oldValues.description}" → "${newValues.description}"`)
+    changes.push(`Description: "${oldValues.description || ''}" → "${newValues.description || ''}"`)
   }
   if (oldValues.role !== newValues.role) {
-    changes.push(`Role: ${oldValues.role} → ${newValues.role}`)
+    changes.push(`Role: ${oldValues.role || ''} → ${newValues.role || ''}`)
   }
   if (oldValues.is_active !== newValues.is_active) {
     changes.push(`Status: ${oldValues.is_active ? 'Active' : 'Inactive'} → ${newValues.is_active ? 'Active' : 'Inactive'}`)
