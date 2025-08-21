@@ -603,14 +603,14 @@ export function Sales() {
         }
         
         body {
-            font-family: 'Courier New', monospace;
-            font-size: 10px;
-            line-height: 1.2;
+            font-family: 'Arial', sans-serif;
+            font-size: 20px;
+            line-height: 1.5;
             background: white;
             color: #000000;
-            width: 80mm;
+            width: 100mm;
             margin: 0 auto;
-            font-weight: normal;
+            font-weight: bold;
         }
         
         .receipt {
@@ -619,45 +619,64 @@ export function Sales() {
             border: none;
         }
         
-        .header {
-            text-align: center;
-            margin-bottom: 3mm;
-        }
-        
-        .logo {
-            max-width: 60mm;
-            max-height: 20mm;
-            margin-bottom: 2mm;
-        }
+                    .header {
+                text-align: center;
+                margin-bottom: 4mm;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+            }
+            
+            .logo {
+                max-width: 60mm;
+                max-height: 20mm;
+                margin-bottom: 3mm;
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+                align-self: center;
+            }
         
         .contact-info {
             text-align: center;
-            font-size: 8px;
-            margin-bottom: 3mm;
-            line-height: 1.1;
+            font-size: 18px;
+            margin-bottom: 4mm;
+            line-height: 1.4;
             color: #000000;
+            font-weight: normal;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
         }
         
         .divider {
-            border-top: 2px solid #000000;
-            margin: 2mm 0;
+            border-top: 3px solid #000000;
+            margin: 3mm 0;
         }
         
         .item {
-            margin: 1mm 0;
-            font-size: 9px;
+            margin: 3mm 0;
+            font-size: 19px;
             color: #000000;
+            font-weight: bold;
         }
         
         .item-name {
             font-weight: bold;
             word-wrap: break-word;
             color: #000000;
+            font-size: 20px;
         }
         
         .item-details {
-            margin-left: 2mm;
+            margin-left: 4mm;
             color: #000000;
+            font-size: 18px;
+            font-weight: bold;
         }
         
         .totals {
@@ -667,40 +686,42 @@ export function Sales() {
         .total-row {
             display: flex;
             justify-content: space-between;
-            margin: 1mm 0;
-            font-size: 9px;
+            margin: 3mm 0;
+            font-size: 19px;
             color: #000000;
+            font-weight: bold;
         }
         
         .final-total {
             font-weight: bold;
-            font-size: 11px;
-            border-top: 2px solid #000000;
-            padding-top: 1mm;
+            font-size: 22px;
+            border-top: 4px solid #000000;
+            padding-top: 3mm;
             color: #000000;
         }
         
         .footer {
             text-align: center;
-            margin-top: 3mm;
-            font-size: 8px;
+            margin-top: 5mm;
+            font-size: 18px;
             font-style: italic;
             color: #000000;
+            font-weight: bold;
         }
         
         @media print {
             body {
-                width: 80mm !important;
+                width: 100mm !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 color: #000000 !important;
             }
             .receipt {
                 border: none !important;
-                padding: 2mm !important;
+                padding: 3mm !important;
             }
             @page {
-                size: 80mm auto;
+                size: 100mm auto;
                 margin: 0;
             }
         }
