@@ -65,7 +65,6 @@ export function Sales() {
   const [paymentMethod, setPaymentMethod] = useState<string>('cash')
   const [discountType, setDiscountType] = useState<'flat' | 'percentage'>('flat')
   const [discountValue, setDiscountValue] = useState<number>(0)
-  const [taxRate, setTaxRate] = useState<number>(0.075) // 7.5% tax rate
   const [amountPaid, setAmountPaid] = useState<number>(0)
   const [showCustomerModal, setShowCustomerModal] = useState(false)
   const [showReceiptModal, setShowReceiptModal] = useState(false)
@@ -211,13 +210,8 @@ export function Sales() {
     return discountValue
   }
 
-  const calculateTaxAmount = () => {
-    const subtotalAfterDiscount = calculateSubtotal() - calculateDiscountAmount()
-    return subtotalAfterDiscount * taxRate
-  }
-
   const calculateTotal = () => {
-    return calculateSubtotal() - calculateDiscountAmount() + calculateTaxAmount()
+    return calculateSubtotal() - calculateDiscountAmount()
   }
 
   const calculateChangeDue = () => {
@@ -270,7 +264,6 @@ export function Sales() {
     try {
       const subtotal = calculateSubtotal()
       const discountAmount = calculateDiscountAmount()
-      const taxAmount = calculateTaxAmount()
 
       // Create sale
       const { data: saleData, error: saleError } = await supabase
@@ -323,7 +316,6 @@ export function Sales() {
       if (fetchError) throw fetchError
 
       // Add calculated values for receipt
-      completeSale.tax_amount = taxAmount
       completeSale.change_due = calculateChangeDue()
       completeSale.amount_paid = amountPaid
 
@@ -354,7 +346,6 @@ export function Sales() {
       created_at: new Date().toISOString(),
       subtotal: calculateSubtotal(),
       discount_amount: calculateDiscountAmount(),
-      tax_amount: calculateTaxAmount(),
       total_amount: calculateTotal(),
       amount_paid: amountPaid,
       change_due: calculateChangeDue(),
@@ -538,10 +529,6 @@ export function Sales() {
                 <span>-$${lastSale.discount_amount.toFixed(2)}</span>
             </div>
             ` : ''}
-            <div class="total-row">
-                <span>Tax (${(taxRate * 100).toFixed(1)}%):</span>
-                <span>$${(lastSale.tax_amount || 0).toFixed(2)}</span>
-            </div>
             <div class="total-row final-total">
                 <span>TOTAL:</span>
                 <span>$${lastSale.total_amount.toFixed(2)}</span>
@@ -776,10 +763,6 @@ export function Sales() {
                 <span>-$${lastSale.discount_amount.toFixed(2)}</span>
             </div>
             ` : ''}
-            <div class="total-row">
-                <span>Tax (${(taxRate * 100).toFixed(1)}%):</span>
-                <span>$${(lastSale.tax_amount || 0).toFixed(2)}</span>
-            </div>
             <div class="total-row final-total">
                 <span>TOTAL:</span>
                 <span>$${lastSale.total_amount.toFixed(2)}</span>
@@ -1191,10 +1174,7 @@ export function Sales() {
                   <span>-{formatCurrency(calculateDiscountAmount())}</span>
                 </div>
               )}
-              <div className="flex justify-between text-sm">
-                <span>Tax ({(taxRate * 100).toFixed(1)}%):</span>
-                <span>{formatCurrency(calculateTaxAmount())}</span>
-              </div>
+
               <div className="flex justify-between text-lg font-bold border-t pt-2">
                 <span>Total:</span>
                 <span className="text-blue-600">{formatCurrency(calculateTotal())}</span>
@@ -1382,10 +1362,7 @@ export function Sales() {
                     <span>-${lastSale.discount_amount.toFixed(2)}</span>
                   </div>
                 )}
-                <div className="flex justify-between">
-                  <span>Tax ({(taxRate * 100).toFixed(1)}%):</span>
-                  <span>${(lastSale.tax_amount || 0).toFixed(2)}</span>
-                </div>
+
                 <div className="flex justify-between font-bold">
                   <span>TOTAL:</span>
                   <span>${lastSale.total_amount.toFixed(2)}</span>

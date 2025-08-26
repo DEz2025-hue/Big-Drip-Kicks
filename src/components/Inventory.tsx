@@ -24,6 +24,8 @@ interface Product {
   barcode: string | null
   category_id: string | null
   brand_id: string | null
+  sub_brand_id: string | null
+  size: string | null
   cost_price: number
   selling_price: number
   stock_quantity: number
@@ -36,6 +38,7 @@ interface Product {
   created_at: string
   categories?: { name: string }
   brands?: { name: string }
+  sub_brands?: { name: string }
   total_sales?: number
   total_revenue?: number
   remaining_value?: number
@@ -50,6 +53,13 @@ interface Category {
 interface Brand {
   id: string
   name: string
+  description: string | null
+}
+
+interface SubBrand {
+  id: string
+  name: string
+  brand_id: string
   description: string | null
 }
 
@@ -75,7 +85,6 @@ interface Sale {
   sale_items: SaleItem[]
   subtotal: number
   discount_amount: number
-  tax_amount: number
   total_amount: number
   payment_method: string
   amount_paid?: number
@@ -87,6 +96,7 @@ export default function Inventory() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [brands, setBrands] = useState<Brand[]>([])
+  const [subBrands, setSubBrands] = useState<SubBrand[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [showAddProduct, setShowAddProduct] = useState(false)
@@ -99,12 +109,21 @@ export default function Inventory() {
   } | null>(null)
   const [uploadingImage, setUploadingImage] = useState(false)
 
+  // Available sizes for sneakers
+  const sizes = [
+    '5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5', '9', '9.5', '10', '10.5', 
+    '11', '11.5', '12', '12.5', '13', '13.5', '14', '14.5', '15',
+    'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'
+  ]
+
   const [newProduct, setNewProduct] = useState({
     name: '',
     sku: '',
     barcode: '',
     category_id: '',
     brand_id: '',
+    sub_brand_id: '',
+    size: '',
     cost_price: 0,
     selling_price: 0,
     stock_quantity: 0,
@@ -119,6 +138,7 @@ export default function Inventory() {
     fetchProducts()
     fetchCategories()
     fetchBrands()
+    fetchSubBrands()
   }, [])
 
   const fetchProducts = async () => {
@@ -128,7 +148,8 @@ export default function Inventory() {
         .select(`
           *,
           categories (name),
-          brands (name)
+          brands (name),
+          sub_brands (name)
         `)
         .eq('is_active', true)
         .order('created_at', { ascending: false })
@@ -203,6 +224,25 @@ export default function Inventory() {
     }
   }
 
+  const fetchSubBrands = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('sub_brands')
+        .select('*')
+        .order('name')
+
+      if (error) throw error
+      setSubBrands(data || [])
+    } catch (error) {
+      console.error('Error fetching sub-brands:', error)
+    }
+  }
+
+  // Get sub-brands for a specific brand
+  const getSubBrandsForBrand = (brandId: string) => {
+    return subBrands.filter(subBrand => subBrand.brand_id === brandId)
+  }
+
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
@@ -213,6 +253,8 @@ export default function Inventory() {
           created_by: profile?.id,
           category_id: newProduct.category_id || null,
           brand_id: newProduct.brand_id || null,
+          sub_brand_id: newProduct.sub_brand_id || null,
+          size: newProduct.size || null,
           barcode: newProduct.barcode || null,
           image_url: newProduct.image_url || null,
           image_urls: newProduct.image_urls || []
@@ -226,6 +268,8 @@ export default function Inventory() {
         barcode: '',
         category_id: '',
         brand_id: '',
+        sub_brand_id: '',
+        size: '',
         cost_price: 0,
         selling_price: 0,
         stock_quantity: 0,
@@ -256,6 +300,8 @@ export default function Inventory() {
           barcode: editingProduct.barcode || null,
           category_id: editingProduct.category_id || null,
           brand_id: editingProduct.brand_id || null,
+          sub_brand_id: editingProduct.sub_brand_id || null,
+          size: editingProduct.size || null,
           cost_price: editingProduct.cost_price,
           selling_price: editingProduct.selling_price,
           stock_quantity: editingProduct.stock_quantity,
@@ -474,10 +520,16 @@ export default function Inventory() {
       </div>
 
       {/* Inventory Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="bg-blue-50 p-4 rounded-lg">
           <div className="text-sm font-medium text-blue-600">Total Products</div>
           <div className="text-2xl font-bold text-blue-900">{products.length}</div>
+        </div>
+        <div className="bg-indigo-50 p-4 rounded-lg">
+          <div className="text-sm font-medium text-indigo-600">Total Units</div>
+          <div className="text-2xl font-bold text-indigo-900">
+            {products.reduce((sum, product) => sum + (product.stock_quantity || 0), 0)} units
+          </div>
         </div>
         <div className="bg-green-50 p-4 rounded-lg">
           <div className="text-sm font-medium text-green-600">Total Sales</div>
@@ -575,6 +627,12 @@ export default function Inventory() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{product.categories?.name || 'N/A'}</div>
                     <div className="text-sm text-gray-500">{product.brands?.name || 'N/A'}</div>
+                    {product.sub_brands?.name && (
+                      <div className="text-sm text-blue-600">{product.sub_brands.name}</div>
+                    )}
+                    {product.size && (
+                      <div className="text-sm text-purple-600">Size: {product.size}</div>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">Cost: {formatCurrency(product.cost_price)}</div>
@@ -736,13 +794,52 @@ export default function Inventory() {
                   <label className="block text-sm font-medium text-gray-700">Brand</label>
                   <select
                     value={newProduct.brand_id}
-                    onChange={(e) => setNewProduct({ ...newProduct, brand_id: e.target.value })}
+                    onChange={(e) => {
+                      setNewProduct({ 
+                        ...newProduct, 
+                        brand_id: e.target.value,
+                        sub_brand_id: '' // Reset sub-brand when brand changes
+                      })
+                    }}
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Select Brand</option>
                     {brands.map((brand) => (
                       <option key={brand.id} value={brand.id}>
                         {brand.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Sub-Brand</label>
+                  <select
+                    value={newProduct.sub_brand_id}
+                    onChange={(e) => setNewProduct({ ...newProduct, sub_brand_id: e.target.value })}
+                    disabled={!newProduct.brand_id}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    size={newProduct.brand_id && getSubBrandsForBrand(newProduct.brand_id).length > 8 ? 8 : undefined}
+                  >
+                    <option value="">Select Sub-Brand</option>
+                    {newProduct.brand_id && getSubBrandsForBrand(newProduct.brand_id).map((subBrand) => (
+                      <option key={subBrand.id} value={subBrand.id}>
+                        {subBrand.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Size</label>
+                  <select
+                    value={newProduct.size}
+                    onChange={(e) => setNewProduct({ ...newProduct, size: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                    size={sizes.length > 8 ? 8 : undefined}
+                  >
+                    <option value="">Select Size</option>
+                    {sizes.map((size) => (
+                      <option key={size} value={size}>
+                        {size}
                       </option>
                     ))}
                   </select>
@@ -932,13 +1029,52 @@ export default function Inventory() {
                   <label className="block text-sm font-medium text-gray-700">Brand</label>
                   <select
                     value={editingProduct.brand_id || ''}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, brand_id: e.target.value })}
+                    onChange={(e) => {
+                      setEditingProduct({ 
+                        ...editingProduct, 
+                        brand_id: e.target.value,
+                        sub_brand_id: '' // Reset sub-brand when brand changes
+                      })
+                    }}
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Select Brand</option>
                     {brands.map((brand) => (
                       <option key={brand.id} value={brand.id}>
                         {brand.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Sub-Brand</label>
+                  <select
+                    value={editingProduct.sub_brand_id || ''}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, sub_brand_id: e.target.value })}
+                    disabled={!editingProduct.brand_id}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    size={editingProduct.brand_id && getSubBrandsForBrand(editingProduct.brand_id).length > 8 ? 8 : undefined}
+                  >
+                    <option value="">Select Sub-Brand</option>
+                    {editingProduct.brand_id && getSubBrandsForBrand(editingProduct.brand_id).map((subBrand) => (
+                      <option key={subBrand.id} value={subBrand.id}>
+                        {subBrand.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Size</label>
+                  <select
+                    value={editingProduct.size || ''}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, size: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                    size={sizes.length > 8 ? 8 : undefined}
+                  >
+                    <option value="">Select Size</option>
+                    {sizes.map((size) => (
+                      <option key={size} value={size}>
+                        {size}
                       </option>
                     ))}
                   </select>
